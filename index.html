@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>ClawBot 授权签发</title>
+  <style>
+    :root { --bg:#f5f7fa; --card:#fff; --line:#e3e8ef; --text:#1f2937; --muted:#6b7280; --accent:#16835f; --danger:#b91c1c; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; background:var(--bg); color:var(--text); }
+    .wrap { max-width:760px; margin:0 auto; padding:32px 16px 64px; }
+    header { text-align:center; margin-bottom:28px; }
+    header h1 { margin:0 0 6px; font-size:24px; }
+    header p { margin:0; color:var(--muted); font-size:14px; }
+    .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:20px 22px; margin-bottom:18px; }
+    .card h2 { margin:0 0 4px; font-size:16px; }
+    .card .desc { margin:0 0 14px; color:var(--muted); font-size:13px; line-height:1.6; }
+    .step { display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%; background:var(--accent); color:#fff; font-size:12px; margin-right:8px; }
+    pre.code { background:#0f172a; color:#e2e8f0; padding:12px 14px; border-radius:8px; font-size:13px; overflow-x:auto; line-height:1.7; margin:10px 0; }
+    pre.code code { font-family:ui-monospace,Consolas,monospace; }
+    .code .cmd { color:#7dd3fc; }
+    .code .comment { color:#64748b; }
+    label.field { display:block; margin-bottom:12px; }
+    label.field span { display:block; font-size:13px; margin-bottom:5px; color:#374151; }
+    input[type=text], input[type=password], input[type=date], input[type=datetime-local], select {
+      width:100%; padding:9px 11px; border:1px solid var(--line); border-radius:8px; font-size:14px; background:#fff; color:var(--text);
+    }
+    input:focus { outline:2px solid rgba(22,131,95,.3); border-color:var(--accent); }
+    .row { display:flex; gap:12px; }
+    .row label.field { flex:1; }
+    .btn { display:inline-block; padding:10px 18px; border:none; border-radius:8px; font-size:14px; cursor:pointer; }
+    .btn-primary { background:var(--accent); color:#fff; }
+    .btn-primary:hover { opacity:.92; }
+    .btn-primary:disabled { opacity:.5; cursor:not-allowed; }
+    .btn-secondary { background:#eef2f7; color:var(--text); }
+    .error { display:none; color:var(--danger); font-size:13px; margin-top:10px; }
+    .error.show { display:block; }
+    textarea.out { width:100%; min-height:180px; font-family:ui-monospace,Consolas,monospace; font-size:12px; border:1px solid var(--line); border-radius:8px; padding:10px; background:#f8fafc; display:none; }
+    .out-wrap { display:none; }
+    .out-wrap.show { display:block; }
+    .hint { font-size:12px; color:var(--muted); margin-top:8px; }
+    .copy-btn { margin-top:8px; }
+    footer { text-align:center; color:var(--muted); font-size:12px; margin-top:24px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>ClawBot 授权签发</h1>
+      <p>商行售后客服系统 · 离线授权码生成（不联网，所有计算在浏览器本地完成）</p>
+    </header>
+
+    <section class="card">
+      <h2><span class="step">1</span>在客户服务器上获取机器指纹</h2>
+      <p class="desc">让客户登录服务器（Linux），执行下面命令，把输出的 64 位指纹发给你：</p>
+      <pre class="code"><code><span class="comment"># 把 clawbot 程序放到服务器后执行</span>
+<span class="cmd">./clawbot --machine-code</span>
+
+<span class="comment"># 输出示例：</span>
+<span class="cmd">3f2a9c1e...（64 位十六进制指纹）</span></code></pre>
+      <p class="desc" style="margin-bottom:0">如果输出末尾带有「缺失分量」提示，说明该服务器环境（如容器）读不到部分硬件标识，请把完整输出原样发来，需要单独评估。</p>
+    </section>
+
+    <section class="card">
+      <h2><span class="step">2</span>填写授权信息</h2>
+      <label class="field"><span>机器指纹（64 位 hex）</span>
+        <input type="text" id="machineCode" placeholder="粘贴客户发来的指纹" autocomplete="off" spellcheck="false">
+      </label>
+      <label class="field"><span>到期时间</span>
+        <input type="datetime-local" id="expiresAt">
+      </label>
+      <div class="row">
+        <label class="field"><span>客户名（可选）</span>
+          <input type="text" id="licensee" placeholder="例如：XX 商行" autocomplete="off">
+        </label>
+        <label class="field"><span>期望公网 IP（可选，软绑定）</span>
+          <input type="text" id="expectedIp" placeholder="不填则不校验 IP" autocomplete="off">
+        </label>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2><span class="step">3</span>生成授权码</h2>
+      <label class="field"><span>签发口令（开发者持有）</span>
+        <input type="password" id="password" placeholder="输入签发口令" autocomplete="off">
+      </label>
+      <button class="btn btn-primary" id="generateBtn" type="button">生成授权码</button>
+      <div class="error" id="errorBox"></div>
+      <div class="out-wrap" id="outWrap">
+        <p class="desc" style="margin:14px 0 8px">把下面的内容保存为 <code>license.json</code>，放在服务器与 clawbot 程序同级的 <code>license/</code> 目录：</p>
+        <textarea class="out" id="outText" readonly></textarea>
+        <button class="btn btn-secondary copy-btn" id="copyBtn" type="button">复制授权码</button>
+        <p class="hint">部署路径：服务器上 <code>license/license.json</code>（可用 <code>LICENSE_FILE</code> 环境变量修改）。</p>
+      </div>
+    </section>
+
+    <footer>授权码由 Ed25519 私钥签名，私钥以口令加密存放在本站，无需联网验证。</footer>
+  </div>
+  <script src="vendor/tweetnacl.min.js"></script>
+  <script src="license-key.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
