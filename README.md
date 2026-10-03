@@ -13,14 +13,14 @@ go run ./cmd/license-tool gen
 
 # 2. 用签发口令加密私钥，生成 license-key.js
 go run ./cmd/license-tool webkey -password '你的签发口令'
-#    默认签发口令是 ningailing，建议部署前用环境变量 CLAWBOT_ISSUE_PASSWORD 覆盖
+#    签发口令自己定（≥16 位，不要与他人共享），不要写在任何文档或代码里
 ```
 
-生成的 `website/license-key.js` 包含**加密后的私钥**，请不要把它提交进公开仓库（`.gitignore` 已排除）。
+生成的 `license-key.js` 包含**加密后的私钥**，请不要把它提交进公开仓库（`.gitignore` 已排除）。
 
 ## 部署到 GitHub Pages
 
-1. 把 `website/` 目录内容（index.html、app.js、vendor/、license-key.js）提交到仓库（建议私有仓库）
+1. 把 `website/` 目录内容（index.html、app.js、vendor/）提交到仓库（建议私有仓库）；`license-key.js` 不要进 git，单独上传到托管平台（Cloudflare Pages 可直接上传，GitHub Pages 请用私有仓库或 Actions secret 注入）
 2. 仓库 Settings → Pages → Source 选择该分支的根目录（或指定 website/ 目录）
 3. 访问 Pages 地址即可使用
 
